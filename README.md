@@ -1,4 +1,6 @@
-# Tencent DNS 永久配置工具 - 快速使用指南
+<div align="center">
+<h1>Tencent DNS 永久配置工具 - 快速使用指南</h1>
+</div>
 
 <div align="center">
 

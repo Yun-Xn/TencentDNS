@@ -1,8 +1,11 @@
 # Tencent DNS 永久配置工具 - 快速使用指南
 
 <div align="center">
+
 ## 好用请点一个star ⭐，谢谢支持！
+
 </div>
+
 ##  快速开始
 
 ### 简单使用（推荐）

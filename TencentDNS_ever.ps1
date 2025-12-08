@@ -1,4 +1,6 @@
 <#
+author： Yun
+
 .SYNOPSIS
 Tencent DNS Permanent Configuration - Rules persist after system reboot
 .DESCRIPTION
@@ -23,9 +25,35 @@ param(
     [switch]$DebugMode
 )
 
-# Force UTF-8 encoding
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
+# ========================== Anti-Extract Protection ==========================
+# Prevent source code extraction from compiled EXE (PS2EXE protection)
+if ($MyInvocation.Line -match "-extract" -or 
+    $args -match "extract" -or 
+    $args -match "-extract" -or
+    $PSBoundParameters.ContainsKey("extract")) {
+    Write-Host "Illegal extraction attempt detected!" -ForegroundColor Red
+    Write-Host "非法提取操作，程序已退出！" -ForegroundColor Red
+    Start-Sleep -Seconds 2
+    Exit 1
+}
+# =============================================================================
+
+# Force UTF-8 encoding (with error handling for compiled EXE)
+try {
+    if ([Console]::OutputEncoding -ne $null) {
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    }
+}
+catch {
+    # Ignore console encoding errors in compiled EXE environment
+}
+
+try {
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+}
+catch {
+    # Ignore output encoding errors
+}
 
 # Disable confirmation prompts
 $ConfirmPreference = 'None'
@@ -36,25 +64,115 @@ $TencentDNS = @("119.29.29.29", "182.254.116.116")
 
 # Tencent domain list
 $TencentDomains = @(
-    "qq.com",
-    "*.qq.com",
-    "weixin.qq.com",
-    "*.weixin.qq.com",
-    "tencent.com",
-    "*.tencent.com",
-    "wegame.com",
-    "*.wegame.com",
-    "*.tim.qq.com",
-    "*.qzone.qq.com",
-    "v.qq.com",
-    "*.v.qq.com",
-    "*.lol.qq.com",
-    "*.cf.qq.com",
-    "*.dnf.qq.com",
-    "wechat.com",
+    # ===================== 1. 核心基础域名 =====================
+    "tencent.com",        # 腾讯集团主域名
+    "*.tencent.com",      # 腾讯全量子域名通配
+    "tencent.cn",         # 腾讯国内备用主域名
+    "*.tencent.cn",
+    "qq.com",             # 腾讯核心品牌域名（QQ生态基座）
+    "*.qq.com",           # QQ生态全量子域名通配
+    
+    # ===================== 2. 社交通信类（核心） =====================
+    # 微信/WeChat
+    "weixin.qq.com",      # 微信官网/后台
+    "*.weixin.qq.com",    # 微信全量子域名（支付、公众号、小程序等）
+    "wechat.com",         # 微信海外版
     "*.wechat.com",
+    "wx.qq.com",          # 微信快捷登录/移动端核心
+    "*.wx.qq.com",
+    # QQ通信
+    "im.qq.com",          # QQ即时通信核心
+    "*.im.qq.com",
+    "mail.qq.com",        # QQ邮箱
+    "*.mail.qq.com",
+    "qzone.qq.com",       # QQ空间
+    "*.qzone.qq.com",
+    "tim.qq.com",         # TIM办公版
+    "*.tim.qq.com",
+
+    # ===================== 3. 游戏业务类（腾讯游戏全矩阵） =====================
+    # 游戏平台
+    "wegame.com",         # WeGame平台
+    "*.wegame.com",
+    "game.qq.com",        # 腾讯游戏官网
+    "*.game.qq.com",
+    "tgp.qq.com",         # WeGame前身（兼容）
+    # 核心游戏子域名（主流自研/代理）
+    "*.lol.qq.com",       # 英雄联盟
+    "*.cf.qq.com",        # 穿越火线
+    "*.dnf.qq.com",       # 地下城与勇士
+    "*.val.qq.com",       # 无畏契约（VALORANT）
+    "*.wzry.qq.com",      # 王者荣耀
+    "*.pubgmobile.com",   # 和平精英（海外版）
+    "*.codm.qq.com",      # 使命召唤手游
+    "*.jxsj.qq.com",      # 金铲铲之战
+    "*.ny.qq.com",        # 逆战
+    "*.zs.qq.com",        # 诛仙
+    "*.riotcdn.net",      # 拳头游戏CDN（腾讯代理游戏通用）
+    # 三角洲
+    "*.delta.qq.com",   # 游戏主服务(登录、匹配、游戏内服务)
+    "*.dft.qq.com",     # 游戏主服务(Delta Force缩写)
+    "delta.qq.com",     # 官方网站(如有)
+    "*.delta-update.qq.com", # 游戏更新服务器
+    "*.delta-cdn.qq.com",   # 游戏资源CDN
+    "*.delta-auth.qq.com"  # 游戏认证服务器
+
+    # ===================== 4. 视频文娱类 =====================
+    "v.qq.com",           # 腾讯视频主站
+    "*.v.qq.com",
+    "iqiyi.com",          # 腾讯参股（可选，按需添加）
+    "*.iqiyi.com",
+    "qqmusic.qq.com",     # QQ音乐
     "*.qqmusic.qq.com",
-    "*.meeting.qq.com"
+    "kugou.com",          # 腾讯音乐旗下
+    "*.kugou.com",
+    "kuwo.cn",            # 酷我音乐
+    "*.kuwo.cn",
+    "y.qq.com",           # QQ音乐移动端
+    "*.y.qq.com",
+    "ac.qq.com",          # 腾讯动漫
+    "*.ac.qq.com",
+
+    # ===================== 5. 云服务&企业办公类 =====================
+    "cloud.tencent.com",  # 腾讯云官网
+    "*.cloud.tencent.com",
+    "tencentcloud.com",   # 腾讯云海外版
+    "*.tencentcloud.com",
+    "work.weixin.qq.com", # 企业微信
+    "*.work.weixin.qq.com",
+    "meeting.qq.com",     # 腾讯会议
+    "*.meeting.qq.com",
+    "docs.qq.com",        # 腾讯文档
+    "*.docs.qq.com",
+    "sheet.qq.com",       # 腾讯表格
+    "*.sheet.qq.com",
+    "txcloud.qq.com",     # 腾讯云企业版（兼容）
+
+    # ===================== 6. 金融科技类 =====================
+    "pay.qq.com",         # QQ支付
+    "*.pay.qq.com",
+    "tenpay.com",         # 财付通
+    "*.tenpay.com",
+    "wxpay.qq.com",       # 微信支付后台
+    "*.wxpay.qq.com",
+    "财付通.com",         # 财付通中文域名（兼容）
+    "*.财付通.com",
+    "wechatpay.com",      # 微信支付海外版
+    "*.wechatpay.com",
+
+    # ===================== 7. 工具&内容平台类 =====================
+    "news.qq.com",        # 腾讯新闻
+    "*.news.qq.com",
+    "sports.qq.com",      # 腾讯体育
+    "*.sports.qq.com",
+    "map.qq.com",         # 腾讯地图
+    "*.map.qq.com",
+    "browser.qq.com",     # QQ浏览器
+    "*.browser.qq.com",
+    "soso.com",           # 腾讯搜搜
+    "*.soso.com",
+    "qqwenwen.com",       # 腾讯问问
+    "*.qqwenwen.com"
 )
 
 # Rule identifier
@@ -182,64 +300,154 @@ function Write-DebugSummary {
 function Test-SystemCompatibility {
     Write-DebugStep "Checking system compatibility"
     
-    $osVersion = [System.Environment]::OSVersion.Version
-    $osCaption = (Get-CimInstance Win32_OperatingSystem).Caption
+    # Get real Windows version using multiple methods
+    $osVersion = $null
+    $osBuild = 0
     $psVersion = $PSVersionTable.PSVersion
     
-    Write-DebugVariable "OSVersion" "$osCaption (Build $($osVersion.Build))" "Operating System"
-    Write-DebugVariable "PowerShellVersion" $psVersion.ToString() "PowerShell Version"
-    
-    $issues = @()
-    
-    # Check Windows version (need Windows 10 1607+ / Server 2016+)
-    # Windows 10 build 14393 = 1607 (Anniversary Update)
-    # Windows 11 build 22000+
-    if ($osVersion.Major -lt 10) {
-        $issues += "Windows 10/11 or Server 2016+ required (current: $osCaption)"
-    }
-    elseif ($osVersion.Major -eq 10 -and $osVersion.Build -lt 14393) {
-        $issues += "Windows 10 version 1607+ required (current build: $($osVersion.Build))"
-    }
-    
-    # Check PowerShell version (need 5.1+)
-    if ($psVersion.Major -lt 5 -or ($psVersion.Major -eq 5 -and $psVersion.Minor -lt 1)) {
-        $issues += "PowerShell 5.1+ required (current: $psVersion)"
-    }
-    
-    # Check DNS Client service
+    # Method 1: Try registry (most reliable in EXE)
     try {
-        $dnsService = Get-Service -Name "Dnscache" -ErrorAction Stop
-        Write-DebugVariable "DnsClientService" $dnsService.Status "DNS Client service status"
-        
-        if ($dnsService.Status -ne 'Running') {
-            $issues += "DNS Client service is not running (status: $($dnsService.Status))"
+        $currentVersion = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction Stop
+        if ($currentVersion.CurrentBuild) {
+            $osBuild = [int]$currentVersion.CurrentBuild
+        }
+        if ($currentVersion.CurrentMajorVersionNumber) {
+            $osMajor = [int]$currentVersion.CurrentMajorVersionNumber
+            $osMinor = if ($currentVersion.CurrentMinorVersionNumber) { [int]$currentVersion.CurrentMinorVersionNumber } else { 0 }
+            $osVersion = New-Object System.Version($osMajor, $osMinor, $osBuild)
         }
     }
     catch {
-        $issues += "Cannot access DNS Client service: $($_.Exception.Message)"
+        Write-DebugError "Failed to read version from registry" $_.Exception
+    }
+    
+    # Method 2: Fallback to Environment (may be inaccurate in EXE)
+    if (-not $osVersion) {
+        $osVersion = [System.Environment]::OSVersion.Version
+        $osBuild = $osVersion.Build
+    }
+    
+    # Get OS caption with multiple fallback methods
+    $osCaption = "Windows"
+    try {
+        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
+        if ($os) {
+            $osCaption = $os.Caption
+        }
+    }
+    catch {}
+    
+    if ($osCaption -eq "Windows") {
+        try {
+            $os = Get-WmiObject Win32_OperatingSystem -ErrorAction SilentlyContinue
+            if ($os) {
+                $osCaption = $os.Caption
+            }
+        }
+        catch {}
+    }
+    
+    if ($osCaption -eq "Windows") {
+        try {
+            $productName = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ProductName -ErrorAction SilentlyContinue).ProductName
+            if ($productName) {
+                $osCaption = $productName
+            }
+        }
+        catch {}
+    }
+    
+    $osInfo = "$osCaption (Build $osBuild)"
+    Write-DebugVariable "OSVersion" $osInfo "Operating System"
+    Write-DebugVariable "PowerShellVersion" $psVersion.ToString() "PowerShell Version"
+    
+    # Always display system info for debugging
+    Write-Host "`nDetected System Information:" -ForegroundColor Cyan
+    Write-Host "   OS Major Version: $($osVersion.Major)" -ForegroundColor Gray
+    Write-Host "   OS Build: $osBuild" -ForegroundColor Gray
+    Write-Host "   PowerShell Major Version: $($psVersion.Major)" -ForegroundColor Gray
+    Write-Host "   Full OS Info: $osInfo" -ForegroundColor Gray
+    Write-Host ""
+    
+    # Use Build number for accurate detection (more reliable than Major version)
+    # Windows 10 RTM: 10240
+    # Windows 10 1607: 14393
+    # Windows 11: 22000+
+    
+    if ($osBuild -lt 10240) {
+        Write-Host "`nCRITICAL COMPATIBILITY ISSUE:" -ForegroundColor Red
+        Write-Host "   ✗ Windows 10/11 or Server 2016+ required" -ForegroundColor Red
+        Write-Host "   Current: Build $osBuild (Requires Build 10240+)" -ForegroundColor Red
+        Write-Host "   Detected: $osInfo" -ForegroundColor Red
+        Write-DebugError "Windows build too old: $osBuild"
+        Write-DebugSummary
+        Start-Sleep -Seconds 3
+        exit 1
+    }
+    
+    # PowerShell version check - only fail for ancient versions
+    if ($psVersion.Major -lt 4) {
+        Write-Host "`nCRITICAL COMPATIBILITY ISSUE:" -ForegroundColor Red
+        Write-Host "   ✗ PowerShell 4.0+ required" -ForegroundColor Red
+        Write-Host "   Current: $psVersion (Major=$($psVersion.Major))" -ForegroundColor Red
+        Write-DebugError "PowerShell version too old: $psVersion"
+        Write-DebugSummary
+        Start-Sleep -Seconds 3
+        exit 1
+    }
+    
+    # Collect warnings (never block)
+    $warnings = @()
+    
+    if ($osBuild -ge 10240 -and $osBuild -lt 14393) {
+        $warnings += "Windows 10 version 1607+ (Build 14393+) recommended for best compatibility (current: Build $osBuild)"
+    }
+    
+    if ($psVersion.Major -eq 4 -or ($psVersion.Major -eq 5 -and $psVersion.Minor -lt 1)) {
+        $warnings += "PowerShell 5.1+ recommended for best experience (current: $psVersion)"
+    }
+    
+    # Optional checks that never block execution
+    try {
+        $dnsService = Get-Service -Name "Dnscache" -ErrorAction SilentlyContinue
+        if ($dnsService -and $dnsService.Status -ne 'Running') {
+            $warnings += "DNS Client service is not running (status: $($dnsService.Status))"
+        }
+        if ($dnsService) {
+            Write-DebugVariable "DnsClientService" $dnsService.Status "DNS Client service status"
+        }
+    }
+    catch {
         Write-DebugError "Failed to check DNS Client service" $_.Exception
     }
     
-    # Check DnsClient module availability
-    $dnsClientModule = Get-Module -Name DnsClient -ListAvailable -ErrorAction SilentlyContinue
-    if (-not $dnsClientModule) {
-        $issues += "DnsClient PowerShell module not available"
-    }
-    else {
-        Write-DebugVariable "DnsClientModule" "Available (Version: $($dnsClientModule.Version))" "DnsClient module status"
-    }
-    
-    if ($issues.Count -gt 0) {
-        Write-Host "`nSYSTEM COMPATIBILITY ISSUES DETECTED:" -ForegroundColor Red
-        foreach ($issue in $issues) {
-            Write-Host "   ✗ $issue" -ForegroundColor Red
-            Write-DebugError $issue
+    try {
+        $dnsClientModule = Get-Module -Name DnsClient -ListAvailable -ErrorAction SilentlyContinue
+        if ($dnsClientModule) {
+            Write-DebugVariable "DnsClientModule" "Available (Version: $($dnsClientModule.Version))" "DnsClient module status"
         }
-        return $false
+    }
+    catch {
+        Write-DebugError "Failed to check DnsClient module" $_.Exception
     }
     
-    Write-Host "`nSystem Compatibility Check: PASSED" -ForegroundColor Green
+    # Display warnings (non-blocking)
+    if ($warnings.Count -gt 0) {
+        Write-Host "`nSYSTEM WARNINGS (Non-blocking):" -ForegroundColor Yellow
+        foreach ($warning in $warnings) {
+            Write-Host "   ⚠ $warning" -ForegroundColor Yellow
+            Write-DebugInfo $warning -Level "WARN" -Color "Yellow"
+        }
+        Write-Host "   → Script will continue despite these warnings." -ForegroundColor Gray
+        Write-Host ""
+    }
+    
+    Write-Host "`nSystem Compatibility Check: ✓ PASSED" -ForegroundColor Green
+    Write-Host "   OS: $osInfo" -ForegroundColor Gray
+    Write-Host "   PowerShell: $psVersion" -ForegroundColor Gray
     Write-DebugInfo "System compatibility check passed" -Level "STEP"
+    
+    # Explicitly return true - critical for EXE environment
     return $true
 }
 
@@ -257,17 +465,18 @@ if (-not (Test-Administrator)) {
     Write-Host "Please run PowerShell as Administrator" -ForegroundColor Yellow
     Write-DebugError "Script execution aborted: Administrator privileges required"
     Write-DebugSummary
-    Read-Host "`nPress Enter to exit"
+    Start-Sleep -Seconds 3
     exit 1
 }
 
 # Check system compatibility
-if (-not (Test-SystemCompatibility)) {
+$compatibilityResult = Test-SystemCompatibility
+if (-not $compatibilityResult) {
     Write-Host "`nERROR: System compatibility check failed!" -ForegroundColor Red
     Write-Host "Please ensure your system meets the requirements" -ForegroundColor Yellow
     Write-DebugError "Script execution aborted: System compatibility check failed"
     Write-DebugSummary
-    Read-Host "`nPress Enter to exit"
+    Start-Sleep -Seconds 3
     exit 1
 }
 
@@ -731,5 +940,3 @@ Write-Host "   Test:      .\TencentDNS_ever.ps1 -Action Test" -ForegroundColor W
 
 # Final debug summary
 Write-DebugSummary
-
-Read-Host "`nPress Enter to exit"

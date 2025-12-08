@@ -1,5 +1,19 @@
 # Tencent DNS 永久配置工具 - 快速使用指南
 
+## 🚀 快速开始
+
+### 简单使用（推荐）
+双击运行对应的bat文件，无需手动输入命令：
+
+- **安装DNS规则**: 双击 `TencentDNS_Install.bat`
+- **卸载DNS规则**: 双击 `TencentDNS_Uninstall.bat`
+- **查看当前规则**: 双击 `TencentDNS_Show.bat`
+- **测试DNS配置**: 双击 `TencentDNS_Test.bat`
+- **统一管理界面**: 双击 `TencentDNS.bat` (菜单选择)
+
+### 高级使用（PowerShell命令）
+如果需要调试模式或自定义参数，可以使用PowerShell命令：
+
 ## 📋 基本命令
 
 ### 1️⃣ 安装 DNS 规则(永久生效)
@@ -109,7 +123,25 @@
 
 ## 📊 使用示例
 
-### 示例 1: 首次安装
+### 示例 1: 首次安装（推荐方式）
+```batch
+# 最简单的方式：双击运行
+TencentDNS_Install.bat
+
+# 然后测试是否工作
+TencentDNS_Test.bat
+```
+
+### 示例 2: 日常使用
+```batch
+# 查看当前规则状态
+TencentDNS_Show.bat
+
+# 如果需要卸载
+TencentDNS_Uninstall.bat
+```
+
+### 示例 3: 高级使用（PowerShell命令）
 ```powershell
 # 步骤 1: 以管理员身份打开 PowerShell
 # 步骤 2: 切换到脚本目录
@@ -122,22 +154,10 @@ cd G:\
 .\TencentDNS_ever.ps1 -Action Test -DebugMode
 ```
 
-### 示例 2: 日常使用
-```powershell
-# 查看当前规则状态
-.\TencentDNS_ever.ps1 -Action Show
-
-# 如果需要卸载
-.\TencentDNS_ever.ps1 -Action Uninstall
-```
-
-### 示例 3: 问题排查
-```powershell
-# 当 DNS 解析有问题时,使用调试模式查看详细信息
-.\TencentDNS_ever.ps1 -Action Test -DebugMode
-
-# 检查规则状态
-.\TencentDNS_ever.ps1 -Action Show -DebugMode
+### 示例 4: 统一管理界面
+```batch
+# 运行菜单界面，选择需要的操作
+TencentDNS.bat
 ```
 
 ## 🐛 常见问题
@@ -211,6 +231,24 @@ Resolve-DnsName qq.com
 
 ## 📝 完整流程示例
 
+### 方式一：使用bat文件（推荐）
+```batch
+# ========== 完整安装和验证流程 ==========
+
+# 1. 双击运行安装
+TencentDNS_Install.bat
+
+# 2. 测试规则是否工作
+TencentDNS_Test.bat
+
+# 3. 查看最终规则状态
+TencentDNS_Show.bat
+
+# ========== 完成! ==========
+# 规则已永久配置,重启后自动生效
+```
+
+### 方式二：使用PowerShell命令
 ```powershell
 # ========== 完整安装和验证流程 ==========
 
@@ -237,17 +275,29 @@ cd G:\
 
 ## 🔗 相关文件
 
-- `TencentDNS_ever.ps1` - 主脚本文件
-- `TencentDNS_Debug_说明.md` - 详细调试功能说明
+### 主要文件
+- `TencentDNS_ever.ps1` - 主脚本文件（PowerShell）
 - `README.md` - 本快速使用指南
+
+### 便捷批处理文件（推荐使用）
+- `TencentDNS_Install.bat` - 一键安装DNS规则
+- `TencentDNS_Uninstall.bat` - 一键卸载DNS规则
+- `TencentDNS_Show.bat` - 查看当前规则状态
+- `TencentDNS_Test.bat` - 测试DNS配置
+- `TencentDNS.bat` - 统一管理菜单界面
+
+### 其他文件
+- `TencentDNS_Debug_说明.md` - 详细调试功能说明
+- `校园网腾讯系DNS设置.md` - 校园网使用指南
 
 ## 💡 提示
 
-- 🚀 首次使用建议用 `-DebugMode` 了解脚本工作原理
-- 🔍 遇到问题时使用 `-DebugMode` 获取详细诊断信息
-- ⚡ 日常使用时可以不加 `-DebugMode` 参数,执行更快
-- 📊 调试模式会显示执行时间,帮助了解性能
+-  **推荐使用bat文件**：双击即可运行，无需手动输入命令
+-  **遇到问题时使用调试模式**：运行 `TencentDNS_ever.ps1 -Action Install -DebugMode`
+-  **日常使用bat文件**：执行更快，无需等待PowerShell启动
+-  **调试模式显示执行时间**：帮助了解性能
+-  **统一管理界面**：运行 `TencentDNS.bat` 进入菜单选择模式
 
-## 🎉 享受使用!
+##  享受使用!
 
 如有问题或需要帮助,请查看 `TencentDNS_Debug_说明.md` 了解更多调试技巧。
